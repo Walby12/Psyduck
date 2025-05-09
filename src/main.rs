@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use std::process;
 
 // Expand this
 #[derive(Debug)]
@@ -45,6 +46,9 @@ fn tokenize(source: String) -> Vec<Token> {
             '=' => {
                 tokens.push(token(String::from(src.remove(0)), TokenType::Equals));
             }
+            ' ' | '\t' | '\n' => {
+                src.remove(0);
+            }
             _ => {
                 // Handle multi-chars tokens
                 if src[0].is_ascii_digit() {
@@ -55,8 +59,26 @@ fn tokenize(source: String) -> Vec<Token> {
                         num.push(c);
                     }
                     tokens.push(token(num, TokenType::Number));
+                } else if src[0].is_alphabetic() {
+                    let mut ident = String::new();
+
+                    while src.len() > 0 && src[0].is_alphabetic() {
+                        let c = src.remove(0);
+                        ident.push(c);
+                    }
+
+                    // Expand for other keywords
+                    match ident.as_str() {
+                        "let" => {
+                            tokens.push(token(ident, TokenType::Let));
+                        }
+                        _ => {
+                            tokens.push(token(ident, TokenType::Identifier));
+                        }
+                    }
                 } else {
-                    src.remove(0);
+                    println!("Unrecognized char found in source {}", src[0]);
+                    process::exit(1);
                 }
             }
         }
@@ -66,7 +88,6 @@ fn tokenize(source: String) -> Vec<Token> {
 }
 
 fn main() {
-    let tokens = tokenize(String::from("123 + - * / ()"));
-
+    let tokens = tokenize(String::from("123 let hello "));
     println!("{:?}", tokens);
 }
